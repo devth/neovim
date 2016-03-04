@@ -28,6 +28,7 @@ void loop_init(Loop *loop, void *data)
   uv_timer_init(&loop->uv, &loop->poll_timer);
 }
 
+/// @param ms   0: non-blocking poll. >0: timeout after `ms`.
 void loop_poll_events(Loop *loop, int ms)
 {
   if (loop->recursive++) {
@@ -68,10 +69,10 @@ void loop_schedule(Loop *loop, Event event)
 void loop_on_put(Queue *queue, void *data)
 {
   Loop *loop = data;
-  // Sometimes libuv will run pending callbacks(timer for example) before
+  // Sometimes libuv will run pending callbacks (timer for example) before
   // blocking for a poll. If this happens and the callback pushes a event to one
   // of the queues, the event would only be processed after the poll
-  // returns(user hits a key for example). To avoid this scenario, we call
+  // returns (user hits a key for example). To avoid this scenario, we call
   // uv_stop when a event is enqueued.
   uv_stop(&loop->uv);
 }
@@ -96,6 +97,7 @@ static void async_cb(uv_async_t *handle)
 {
   Loop *l = handle->loop->data;
   uv_mutex_lock(&l->mutex);
+  // Flush thread_events to fast_events for processing on main loop.
   while (!queue_empty(l->thread_events)) {
     Event ev = queue_get(l->thread_events);
     queue_put_event(l->fast_events, ev);
@@ -105,5 +107,6 @@ static void async_cb(uv_async_t *handle)
 
 static void timer_cb(uv_timer_t *handle)
 {
+  // Empty: timer exists only to avoid blocking forever.
 }
 

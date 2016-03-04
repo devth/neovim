@@ -9,7 +9,6 @@
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 
-#define PASTETOGGLE_KEY "<Paste>"
 #define FOCUSGAINED_KEY "<FocusGained>"
 #define FOCUSLOST_KEY   "<FocusLost>"
 #define KEY_BUFFER_SIZE 0xfff
@@ -283,15 +282,11 @@ static bool handle_focus_event(TermInput *input)
 static bool handle_bracketed_paste(TermInput *input)
 {
   if (rbuffer_size(input->read_stream.buffer) > 5 &&
-      (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6) ||
-       !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
+      (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6)
+       || !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
     bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 6);
-    if (input->paste_enabled == enable) {
-      return true;
-    }
-    enqueue_input(input, PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
     input->paste_enabled = enable;
     return true;
   }
@@ -323,15 +318,9 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
   if (eof) {
     if (input->in_fd == 0 && !os_isatty(0) && os_isatty(2)) {
       // Started reading from stdin which is not a pty but failed. Switch to
-      // stderr since it is a pty.
-      //
-      // This is how we support commands like:
-      //
-      // echo q | nvim -es
-      //
-      // and
-      //
-      // ls *.md | xargs nvim
+      // stderr since it is a pty. This is how we support commands like:
+      //    echo q | nvim -es
+      //    ls *.md | xargs nvim
       input->in_fd = 2;
       stream_close(&input->read_stream, NULL);
       queue_put(input->loop->fast_events, restart_reading, 1, input);

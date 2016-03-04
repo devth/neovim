@@ -236,11 +236,9 @@ Terminal *terminal_open(TerminalOptions opts)
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer. Try to get the size from:
-  //
-  // - b:terminal_scrollback_buffer_size
-  // - g:terminal_scrollback_buffer_size
-  // - SCROLLBACK_BUFFER_DEFAULT_SIZE
-  //
+  //   - b:terminal_scrollback_buffer_size
+  //   - g:terminal_scrollback_buffer_size
+  //   - SCROLLBACK_BUFFER_DEFAULT_SIZE
   // but limit to 100k.
   int size = get_config_int("terminal_scrollback_buffer_size");
   rv->sb_size = size > 0 ? (size_t)size : SCROLLBACK_BUFFER_DEFAULT_SIZE;

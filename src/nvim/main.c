@@ -139,8 +139,6 @@ void event_init(void)
   msgpack_rpc_helpers_init();
   // Initialize input events
   input_init();
-  // Timer to wake the event loop if a timeout argument is passed to
-  // `event_poll`
   // Signals
   signal_init();
   // finish mspgack-rpc initialization
