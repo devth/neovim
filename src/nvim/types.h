@@ -13,4 +13,10 @@ typedef unsigned char char_u;
 // Can hold one decoded UTF-8 character.
 typedef uint32_t u8char_T;
 
+typedef enum {
+  kNone  = -1,
+  kFalse = 0,
+  kTrue  = 1,
+} TriState;
+
 #endif  // NVIM_TYPES_H

@@ -1,14 +1,22 @@
 
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/fileio.h"
 #include "nvim/misc2.h"
 #include "nvim/os/os.h"
+#include "nvim/ui.h"
+#include "nvim/getchar.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 
+#include "nvim/ex_docmd.h"
+#include "nvim/memline.h"
+
+#define PASTEPOST_KEY "<PastePost>"
 #define FOCUSGAINED_KEY "<FocusGained>"
 #define FOCUSLOST_KEY   "<FocusLost>"
 #define KEY_BUFFER_SIZE 0xfff
@@ -67,7 +75,7 @@ static void input_done_event(void **argv)
   input_done();
 }
 
-static void wait_input_enqueue(void **argv)
+static void wait_input_enqueue(void **argv)  // MAIN thread
 {
   TermInput *input = argv[0];
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
@@ -200,8 +208,6 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
-static void timer_cb(TimeWatcher *watcher, void *data);
-
 static int get_key_code_timeout(void)
 {
   Integer ms = -1;
@@ -232,9 +238,12 @@ static void tk_getkeys(TermInput *input, bool force)
     }
   }
 
-  if (result != TERMKEY_RES_AGAIN || input->paste_enabled) {
+  if (result != TERMKEY_RES_AGAIN /*|| input->paste_enabled */) {
     return;
   }
+  // ...else: Partial keypress event was found in the buffer, but it does not
+  // yet contain all the bytes required. `key` structure indicates what
+  // termkey_getkey_force() would return.
 
   int ms  = get_key_code_timeout();
 
@@ -266,8 +275,8 @@ static bool handle_focus_event(TermInput *input)
   if (rbuffer_size(input->read_stream.buffer) > 2
       && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[I", 3)
           || !rbuffer_cmp(input->read_stream.buffer, "\x1b[O", 3))) {
-    // Advance past the sequence
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
+    // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 3);
     if (focus_gained) {
       enqueue_input(input, FOCUSGAINED_KEY, sizeof(FOCUSGAINED_KEY) - 1);
@@ -279,25 +288,64 @@ static bool handle_focus_event(TermInput *input)
   return false;
 }
 
+static bool _waiting = false;
 static bool handle_bracketed_paste(TermInput *input)
 {
-  if (rbuffer_size(input->read_stream.buffer) > 5 &&
-      (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6)
-       || !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
-    bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
-    // Advance past the sequence
-    rbuffer_consumed(input->read_stream.buffer, 6);
-    input->paste_enabled = enable;
+  if (_waiting)
+    return true;
+
+  RBuffer *rbuf = input->read_stream.buffer;
+  if (rbuffer_size(rbuf) > 5
+      && (!rbuffer_cmp(rbuf, "\x1b[200~", 6)
+          || !rbuffer_cmp(rbuf, "\x1b[201~", 6))) {
+    bool enable = *rbuffer_get(rbuf, 4) == '0';
+    rbuffer_consumed(rbuf, 6);  // Advance past the sequence
+
+    if (enable) {
+      _waiting = true;
+      ELOG("bracketed paste enable");
+      loop_schedule(&loop, event_create(1, apply_pastepre, 1, input));
+    } else {
+      // loop_schedule(&loop, event_create(1, apply_pastepost, 1, input));
+      enqueue_input(input, PASTEPOST_KEY, sizeof(PASTEPOST_KEY) - 1);
+      // enqueue_input(input, "\034\016:set nopaste\015",
+      //     sizeof("\034\016:set nopaste\015") - 1);
+    }
     return true;
   }
   return false;
 }
 
+static void apply_pastepre(void **argv)  // MAIN thread
+{
+  ELOG("before apply. paste:%d", p_paste);
+  // TermInput *input = argv[0];
+  apply_autocmds(EVENT_PASTEPRE, NULL, NULL, false, curbuf);
+  _waiting = false;
+  ELOG("after apply. paste:%d", p_paste);
+  // flush_buffers(true);
+}
+
+// static void apply_pastepost(void **argv)  // MAIN thread
+// {
+//   // TermInput *input = argv[0];
+//   // exec_normal(true);
+//   // char *cmd = "silent! doau PastePost";
+//   // do_cmdline_cmd(cmd);
+//   // loop_poll_events(&loop,0);
+//   ELOG("before apply. paste:%d", p_paste);
+//   // while (input->waiting) {
+//   //   uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
+//   // }
+//   apply_autocmds(EVENT_PASTEPOST, NULL, NULL, false, curbuf);
+//   ELOG("after apply. paste:%d", p_paste);
+// }
+
 static bool handle_forced_escape(TermInput *input)
 {
   if (rbuffer_size(input->read_stream.buffer) > 1
       && !rbuffer_cmp(input->read_stream.buffer, "\x1b\x00", 2)) {
-    // skip the ESC and NUL and push one <esc> to the input buffer
+    // skip the ESC and NUL and push one ESC to the input buffer
     size_t rcnt;
     termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_stream.buffer,
           &rcnt), 1);
@@ -307,8 +355,6 @@ static bool handle_forced_escape(TermInput *input)
   }
   return false;
 }
-
-static void restart_reading(void **argv);
 
 static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
     bool eof)
@@ -337,20 +383,29 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       continue;
     }
 
-    // Find the next 'esc' and push everything up to it(excluding). This is done
-    // so the `handle_bracketed_paste`/`handle_forced_escape` calls above work
-    // as expected.
+    // Find the next ESC and push everything up to it (excluding), so it will
+    // be the first thing encountered on the next iteration. The `handle_*`
+    // calls (above) depend on this.
+
     size_t count = 0;
     RBUFFER_EACH(input->read_stream.buffer, c, i) {
       count = i + 1;
       if (c == '\x1b' && count > 1) {
         count--;
+        ELOG("read_cb: found ESC: %c", *rbuffer_get(input->read_stream.buffer, count + 4));
         break;
       }
     }
 
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
+
+      // {
+      //   size_t _read;
+      //   char *_ptr = rbuffer_read_ptr(input->read_stream.buffer, &_read);
+      //   ELOG("read_cb: RBUFFER_UNTIL_EMPTY:\n%s", xmemdup(_ptr, consumed));
+      // }
+
       // termkey_push_bytes can return (size_t)-1, so it is possible that
       // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is
       // called soon, it shouldn't happen
@@ -365,8 +420,8 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
     }
   } while (rbuffer_size(input->read_stream.buffer));
   flush_input(input, true);
-  // Make sure the next input escape sequence fits into the ring buffer
-  // without wrap around, otherwise it could be misinterpreted.
+  // CSI and K_SPECIAL are double-escaped later (input_enqueue).
+  // Make sure they can fit into the ring buffer without wrap around.
   rbuffer_reset(input->read_stream.buffer);
 }
 

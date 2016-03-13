@@ -28,7 +28,9 @@ void loop_init(Loop *loop, void *data)
   uv_timer_init(&loop->uv, &loop->poll_timer);
 }
 
-/// @param ms   0: non-blocking poll. >0: timeout after `ms`.
+/// @param ms   0: non-blocking poll.
+///            >0: timeout after `ms`.
+///            <0: wait forever.
 void loop_poll_events(Loop *loop, int ms)
 {
   if (loop->recursive++) {
@@ -107,6 +109,6 @@ static void async_cb(uv_async_t *handle)
 
 static void timer_cb(uv_timer_t *handle)
 {
-  // Empty: timer exists only to avoid blocking forever.
+  // Empty: timer exists only to avoid infinite wait.
 }
 

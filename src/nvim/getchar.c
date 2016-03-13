@@ -145,7 +145,6 @@ static char_u typebuf_init[TYPELEN_INIT];       /* initial typebuf.tb_buf */
 static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
 static int last_recorded_len = 0;       /* number of last recorded chars */
-static const uint8_t ui_toggle[] = { K_SPECIAL, KS_EXTRA, KE_PASTE, 0 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.c.generated.h"
@@ -1728,8 +1727,7 @@ static int vgetorpeek(int advance)
            * - maphash_valid not set: no mappings present.
            * - typebuf.tb_buf[typebuf.tb_off] should not be remapped
            * - in insert or cmdline mode and 'paste' option set
-           * - waiting for "hit return to continue" and CR or SPACE
-           *	 typed
+           * - waiting for "hit return to continue" and CR or SPACE typed
            * - waiting for a char with --more--
            * - in Ctrl-X mode, and we get a valid char for that mode
            */
@@ -1868,14 +1866,8 @@ static int vgetorpeek(int advance)
             }
           }
 
-          // Check for a key that can toggle the 'paste' option
-          if (mp == NULL && (State & (INSERT|NORMAL))) {
-            bool match = typebuf_match_len(ui_toggle, &mlen);
-            if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
-              // didn't match ui_toggle_key and didn't try the whole typebuf,
-              // check the 'pastetoggle'
-              match = typebuf_match_len(p_pt, &mlen);
-            }
+          if (*p_pt != NUL && mp == NULL && (State & (INSERT|NORMAL))) {
+            bool match = typebuf_match_len(p_pt, &mlen);
             if (match) {
               /* write chars to script file(s) */
               if (mlen > typebuf.tb_maplen)

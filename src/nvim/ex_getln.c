@@ -348,7 +348,8 @@ static int command_line_check(VimState *state)
 
 static int command_line_execute(VimState *state, int key)
 {
-  if (key == K_IGNORE || key == K_PASTE) {
+  if (key == K_IGNORE
+      || key == K_PASTEPOST) {
     return -1;  // get another key
   }
 
@@ -1445,6 +1446,9 @@ static int command_line_handle_key(CommandLineState *s)
 
   case K_FOCUSLOST:   // Neovim has lost focus
     apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+    return command_line_not_changed(s);
+  case K_PASTEPOST:
+    apply_autocmds(EVENT_PASTEPOST, NULL, NULL, false, curbuf);
     return command_line_not_changed(s);
 
   default:

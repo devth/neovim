@@ -343,6 +343,7 @@ static const struct nv_cmd {
   {K_EVENT,   nv_event,       NV_KEEPREG,             0},
   {K_FOCUSGAINED, nv_focusgained, NV_KEEPREG,         0},
   {K_FOCUSLOST,   nv_focuslost,   NV_KEEPREG,         0},
+  {K_PASTEPOST,   nv_pastepost,   NV_KEEPREG,         0},
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -3319,6 +3320,8 @@ bool add_to_showcmd(int c)
     K_RIGHTMOUSE, K_RIGHTDRAG, K_RIGHTRELEASE,
     K_MOUSEDOWN, K_MOUSEUP, K_MOUSELEFT, K_MOUSERIGHT,
     K_X1MOUSE, K_X1DRAG, K_X1RELEASE, K_X2MOUSE, K_X2DRAG, K_X2RELEASE,
+    K_FOCUSGAINED, K_FOCUSLOST,
+    K_PASTEPOST,
     K_EVENT,
     0
   };
@@ -7885,6 +7888,11 @@ static void nv_focusgained(cmdarg_T *cap)
 static void nv_focuslost(cmdarg_T *cap)
 {
   apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+}
+
+static void nv_pastepost(cmdarg_T *cap)
+{
+  apply_autocmds(EVENT_PASTEPOST, NULL, NULL, false, curbuf);
 }
 
 /*

@@ -186,8 +186,7 @@ size_t input_enqueue(String keys)
 
     if (*ptr == '<') {
       char *old_ptr = ptr;
-      // Invalid or incomplete key sequence, skip until the next '>' or until
-      // *end
+      // Invalid or incomplete key sequence, skip until the next '>' or *end.
       do {
         ptr++;
       } while (ptr < end && *ptr != '>');
@@ -372,7 +371,7 @@ static void process_interrupts(void)
 
   size_t consume_count = 0;
   RBUFFER_EACH_REVERSE(input_buffer, c, i) {
-    if ((uint8_t)c == 3) {
+    if ((uint8_t)c == Ctrl_C) {
       got_int = true;
       consume_count = i;
       break;
@@ -380,7 +379,7 @@ static void process_interrupts(void)
   }
 
   if (got_int && consume_count) {
-    // Remove everything typed before the CTRL-C
+    // Remove all unprocessed input (typeahead) before the CTRL-C.
     rbuffer_consumed(input_buffer, consume_count);
   }
 }
@@ -402,9 +401,9 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return typebuf_was_filled ||                 // API call filled typeahead
-         rbuffer_size(input_buffer) ||         // Input buffer filled
-         pending_events();                     // Events must be processed
+  return typebuf_was_filled             // API call filled typeahead
+         || rbuffer_size(input_buffer)  // Input buffer filled
+         || pending_events();           // Events must be processed
 }
 
 // Exit because of an input read error.

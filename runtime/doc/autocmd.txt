@@ -724,6 +724,11 @@ InsertCharPre			When a character is typed in Insert mode,
 				It is not allowed to change the text |textlock|.
 				The event is not triggered when 'paste' is
 				set.
+							*PastePre*
+PastePre			
+							*PastePost*
+PastePost			
+				Only fires after PastePre.
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor

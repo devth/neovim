@@ -45,7 +45,7 @@ void vim_command(String str, Error *err)
   try_end(err);
 }
 
-/// Passes input keys to Neovim
+/// Passes input keys to vim
 ///
 /// @param keys to be typed
 /// @param mode specifies the mapping options

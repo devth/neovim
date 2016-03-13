@@ -408,6 +408,9 @@ static int terminal_execute(VimState *state, int key)
     case K_FOCUSLOST:   // nvim has lost focus
       apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
       break;
+    case K_PASTEPOST:
+      apply_autocmds(EVENT_PASTEPOST, NULL, NULL, false, curbuf);
+      break;
 
     case K_LEFTMOUSE:
     case K_LEFTDRAG:

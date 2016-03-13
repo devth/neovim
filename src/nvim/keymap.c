@@ -282,7 +282,7 @@ static struct key_name_entry {
   {K_ZERO,            (char_u *)"Nul"},
   {K_SNR,             (char_u *)"SNR"},
   {K_PLUG,            (char_u *)"Plug"},
-  {K_PASTE,           (char_u *)"Paste"},
+  {K_PASTEPOST,       (char_u *)"PastePost"},
   {K_FOCUSGAINED,     (char_u *)"FocusGained"},
   {K_FOCUSLOST,       (char_u *)"FocusLost"},
   {0,                 NULL}

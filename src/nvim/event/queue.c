@@ -102,7 +102,7 @@ static Queue *queue_new(Queue *parent, put_callback put_cb, void *data)
   return rv;
 }
 
-void queue_free(Queue *queue)
+void queue_free(Queue *queue) FUNC_ATTR_NONNULL_ALL
 {
   assert(queue);
   while (!QUEUE_EMPTY(&queue->headtail)) {
@@ -119,12 +119,12 @@ void queue_free(Queue *queue)
   xfree(queue);
 }
 
-Event queue_get(Queue *queue)
+Event queue_get(Queue *queue) FUNC_ATTR_NONNULL_ALL
 {
   return queue_empty(queue) ? NILEVENT : queue_remove(queue);
 }
 
-void queue_put_event(Queue *queue, Event event)
+void queue_put_event(Queue *queue, Event event) FUNC_ATTR_NONNULL_ALL
 {
   assert(queue);
   queue_push(queue, event);
@@ -151,12 +151,13 @@ bool queue_empty(Queue *queue)
 }
 
 void queue_replace_parent(Queue *queue, Queue *new_parent)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(queue_empty(queue));
   queue->parent = new_parent;
 }
 
-static Event queue_remove(Queue *queue)
+static Event queue_remove(Queue *queue) FUNC_ATTR_NONNULL_ALL
 {
   assert(!queue_empty(queue));
   QUEUE *h = QUEUE_HEAD(&queue->headtail);
@@ -187,7 +188,7 @@ static Event queue_remove(Queue *queue)
   return rv;
 }
 
-static void queue_push(Queue *queue, Event event)
+static void queue_push(Queue *queue, Event event) FUNC_ATTR_NONNULL_ALL
 {
   QueueItem *item = xmalloc(sizeof(QueueItem));
   item->link = false;
@@ -202,7 +203,7 @@ static void queue_push(Queue *queue, Event event)
   }
 }
 
-static QueueItem *queue_node_data(QUEUE *q)
+static QueueItem *queue_node_data(QUEUE *q) FUNC_ATTR_NONNULL_ALL
 {
   return QUEUE_DATA(q, QueueItem, node);
 }

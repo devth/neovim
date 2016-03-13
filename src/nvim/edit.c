@@ -972,6 +972,10 @@ static int insert_handle_key(InsertState *s)
     apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
     break;
 
+  case K_PASTEPOST:
+    apply_autocmds(EVENT_PASTEPOST, NULL, NULL, false, curbuf);
+    break;
+
   case K_HOME:        // <Home>
   case K_KHOME:
   case K_S_HOME:

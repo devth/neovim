@@ -58,6 +58,8 @@ return {
     'JobActivity',            -- when job sent some data
     'MenuPopup',              -- just before popup menu is displayed
     'OptionSet',              -- after setting any option
+    'PastePre',               -- before pasted input
+    'PastePost',              -- after pasted input
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
@@ -83,7 +85,7 @@ return {
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
-    'TextYankPost',           -- after a yank or delete was done (y, d, c)
+    'TextYankPost',           -- after a yank or delete (y, d, c)
     'User',                   -- user defined autocommand
     'VimEnter',               -- after starting Vim
     'VimLeave',               -- before exiting Vim
