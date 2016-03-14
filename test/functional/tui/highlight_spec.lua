@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, execute = helpers.nvim_dir, helpers.execute
 local eq, eval = helpers.eq, helpers.eval
@@ -48,9 +48,9 @@ describe('terminal window highlighting', function()
     describe(title, function() 
       before_each(function()
         set_attrs_fn()
-        thelpers.feed_data('text')
-        thelpers.clear_attrs()
-        thelpers.feed_data('text')
+        child_tui.feed_data('text')
+        child_tui.clear_attrs()
+        child_tui.feed_data('text')
       end)
 
       local function pass_attrs()
@@ -75,7 +75,7 @@ describe('terminal window highlighting', function()
           table.insert(lines, 'line'..tostring(i))
         end
         table.insert(lines, '')
-        thelpers.feed_data(lines)
+        child_tui.feed_data(lines)
         screen:expect([[
           line4                                             |
           line5                                             |
@@ -100,16 +100,16 @@ describe('terminal window highlighting', function()
     end)
   end
 
-  descr('foreground', 1, function() thelpers.set_fg(45) end)
-  descr('background', 2, function() thelpers.set_bg(46) end)
+  descr('foreground', 1, function() child_tui.set_fg(45) end)
+  descr('background', 2, function() child_tui.set_bg(46) end)
   descr('foreground and background', 3, function()
-    thelpers.set_fg(45)
-    thelpers.set_bg(46)
+    child_tui.set_fg(45)
+    child_tui.set_bg(46)
   end)
   descr('bold, italics and underline', 4, function()
-    thelpers.set_bold()
-    thelpers.set_italic()
-    thelpers.set_underline()
+    child_tui.set_bold()
+    child_tui.set_italic()
+    child_tui.set_underline()
   end)
 end)
 
@@ -147,10 +147,10 @@ describe('terminal window highlighting with custom palette', function()
   end)
 
   it('will use the custom color', function()
-    thelpers.set_fg(3)
-    thelpers.feed_data('text')
-    thelpers.clear_attrs()
-    thelpers.feed_data('text')
+    child_tui.set_fg(3)
+    child_tui.feed_data('text')
+    child_tui.clear_attrs()
+    child_tui.feed_data('text')
     screen:expect([[
       tty ready                                         |
       {1:text}text                                          |

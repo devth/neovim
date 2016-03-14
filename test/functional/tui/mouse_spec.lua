@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
-local feed_data = thelpers.feed_data
+local feed_data = child_tui.feed_data
 
 describe('terminal mouse', function()
   local screen
@@ -13,7 +13,7 @@ describe('terminal mouse', function()
     nvim('command', 'highlight StatusLine cterm=NONE')
     nvim('command', 'highlight StatusLineNC cterm=NONE')
     nvim('command', 'highlight VertSplit cterm=NONE')
-    screen = thelpers.screen_setup()
+    screen = child_tui.screen_setup()
     local lines = {}
     for i = 1, 30 do
       table.insert(lines, 'line'..tostring(i))
@@ -65,8 +65,8 @@ describe('terminal mouse', function()
 
     describe('with mouse events enabled by the program', function()
       before_each(function()
-        thelpers.enable_mouse()
-        thelpers.feed_data('mouse enabled\n')
+        child_tui.enable_mouse()
+        child_tui.feed_data('mouse enabled\n')
         screen:expect([[
           line27                                            |
           line28                                            |
@@ -148,8 +148,8 @@ describe('terminal mouse', function()
           -- TERMINAL --                                    |
         ]])
         -- enabling mouse won't affect interaction with other windows
-        thelpers.enable_mouse()
-        thelpers.feed_data('mouse enabled\n')
+        child_tui.enable_mouse()
+        child_tui.feed_data('mouse enabled\n')
         screen:expect([[
            27 line                 |line29                  |
            28 line                 |line30                  |

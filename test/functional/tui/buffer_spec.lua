@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local wait = helpers.wait
 local eval, execute, source = helpers.eval, helpers.execute, helpers.source
@@ -13,7 +13,7 @@ describe('terminal buffer', function()
     clear()
     execute('set modifiable swapfile undolevels=20')
     wait()
-    screen = thelpers.screen_setup()
+    screen = child_tui.screen_setup()
   end)
 
   describe('when a new file is edited', function()

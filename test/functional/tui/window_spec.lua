@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
 
@@ -9,7 +9,7 @@ describe('terminal window', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = child_tui.screen_setup()
   end)
 
   describe('with colorcolumn set', function()
@@ -43,7 +43,7 @@ describe('terminal window', function()
   describe('with fold set', function()
     before_each(function()
       feed('<c-\\><c-n>:set foldenable foldmethod=manual<cr>i')
-      thelpers.feed_data({'line1', 'line2', 'line3', 'line4', ''})
+      child_tui.feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
         tty ready                                         |
         line1                                             |

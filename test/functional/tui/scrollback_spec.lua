@@ -1,17 +1,17 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, execute = helpers.feed, helpers.nvim_dir, helpers.execute
 local wait = helpers.wait
-local feed_data = thelpers.feed_data
+local feed_data = child_tui.feed_data
 
 describe('terminal scrollback', function()
   local screen
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = child_tui.screen_setup()
   end)
 
   after_each(function()

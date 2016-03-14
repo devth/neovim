@@ -1,10 +1,10 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, execute = helpers.nvim_dir, helpers.execute
-local hide_cursor = thelpers.hide_cursor
-local show_cursor = thelpers.show_cursor
+local hide_cursor = child_tui.hide_cursor
+local show_cursor = child_tui.show_cursor
 
 
 describe('terminal cursor', function()
@@ -12,12 +12,12 @@ describe('terminal cursor', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = child_tui.screen_setup()
   end)
 
 
   it('moves the screen cursor when focused', function()
-    thelpers.feed_data('testing cursor')
+    child_tui.feed_data('testing cursor')
     screen:expect([[
       tty ready                                         |
       testing cursor{1: }                                   |

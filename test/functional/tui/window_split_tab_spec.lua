@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
 
@@ -14,7 +14,7 @@ describe('terminal', function()
     nvim('command', 'highlight StatusLine cterm=NONE')
     nvim('command', 'highlight StatusLineNC cterm=NONE')
     nvim('command', 'highlight VertSplit cterm=NONE')
-    screen = thelpers.screen_setup(3)
+    screen = child_tui.screen_setup(3)
   end)
 
   after_each(function()

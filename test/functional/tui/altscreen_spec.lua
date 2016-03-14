@@ -1,17 +1,17 @@
 local helpers = require('test.functional.helpers')
-local thelpers = require('test.functional.terminal.helpers')
+local child_tui = require('test.functional.tui.child_session')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed = helpers.feed
-local feed_data = thelpers.feed_data
-local enter_altscreen = thelpers.enter_altscreen
-local exit_altscreen = thelpers.exit_altscreen
+local feed_data = child_tui.feed_data
+local enter_altscreen = child_tui.enter_altscreen
+local exit_altscreen = child_tui.exit_altscreen
 
 describe('terminal altscreen', function()
   local screen
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = child_tui.screen_setup()
     feed_data({'line1', 'line2', 'line3', 'line4', 'line5', 'line6',
                'line7', 'line8', ''})
     screen:expect([[
