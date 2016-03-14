@@ -103,7 +103,7 @@ describe('tui paste', function()
       PastePre mode:n                                   |
       pasted from terminal (1)                          |
       pasted from terminal (2)                          |
-      ~                                                 |
+      PastePost mode:i{1: }                             |
       [No Name] [+]                                     |
       -- INSERT --                                      |
       -- TERMINAL --                                    |

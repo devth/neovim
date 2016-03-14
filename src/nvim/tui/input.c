@@ -27,7 +27,7 @@
 void term_input_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
-  input->paste_enabled = false;
+  input->paste_started = false;
   input->in_fd = 0;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
@@ -237,7 +237,7 @@ static void tk_getkeys(TermInput *input, bool force)
     }
   }
 
-  if (result != TERMKEY_RES_AGAIN /*|| input->paste_enabled */) {
+  if (result != TERMKEY_RES_AGAIN /*|| input->paste_started */) {
     return;
   }
   // ...else: Partial keypress event was found in the buffer, but it does not
@@ -294,16 +294,18 @@ static bool handle_bracketed_paste(TermInput *input)
       && (!rbuffer_cmp(rbuf, "\x1b[200~", 6)
           || !rbuffer_cmp(rbuf, "\x1b[201~", 6))) {
     bool enable = *rbuffer_get(rbuf, 4) == '0';
-    rbuffer_consumed(rbuf, 6);  // Advance past the sequence
 
+    if (enable && input->paste_started) {
+      // Received a bogus "paste start" after paste was already started.
+      return false;
+    }
+
+    rbuffer_consumed(rbuf, 6);  // Advance past the sequence
+    input->paste_started = enable;
     if (enable) {
-      // DLOG("bracketed paste enable");
       loop_schedule(&loop, event_create(1, apply_pastepre, 0));
     } else {
-      // loop_schedule(&loop, event_create(1, apply_pastepost, 1, input));
       enqueue_input(input, PASTEPOST_KEY, sizeof(PASTEPOST_KEY) - 1);
-      // enqueue_input(input, "\034\016:set nopaste\015",
-      //     sizeof("\034\016:set nopaste\015") - 1);
     }
     return true;
   }

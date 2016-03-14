@@ -9,7 +9,7 @@
 
 typedef struct term_input {
   int in_fd;
-  bool paste_enabled;
+  bool paste_started;
   bool waiting;
   TermKey *tk;
   TimeWatcher timer_handle;
