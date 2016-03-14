@@ -5,15 +5,9 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/fileio.h"
-#include "nvim/misc2.h"
 #include "nvim/os/os.h"
-#include "nvim/ui.h"
-#include "nvim/getchar.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
-
-#include "nvim/ex_docmd.h"
-#include "nvim/memline.h"
 
 #define PASTEPOST_KEY "<PastePost>"
 #define FOCUSGAINED_KEY "<FocusGained>"
@@ -314,25 +308,8 @@ static bool handle_bracketed_paste(TermInput *input)
 
 static void apply_pastepre(void **argv)  // MAIN thread
 {
-  // DLOG("before apply_autocmds. paste:%d", p_paste);
   apply_autocmds(EVENT_PASTEPRE, NULL, NULL, false, curbuf);
-  // DLOG("after apply_autocmds. paste:%d", p_paste);
 }
-
-// static void apply_pastepost(void **argv)  // MAIN thread
-// {
-//   // TermInput *input = argv[0];
-//   // exec_normal(true);
-//   // char *cmd = "silent! doau PastePost";
-//   // do_cmdline_cmd(cmd);
-//   // loop_poll_events(&loop,0);
-//   ELOG("before apply. paste:%d", p_paste);
-//   // while (input->waiting) {
-//   //   uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
-//   // }
-//   apply_autocmds(EVENT_PASTEPOST, NULL, NULL, false, curbuf);
-//   ELOG("after apply. paste:%d", p_paste);
-// }
 
 static bool handle_forced_escape(TermInput *input)
 {
@@ -391,13 +368,6 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
 
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
-
-      // {
-      //   size_t _read;
-      //   char *_ptr = rbuffer_read_ptr(input->read_stream.buffer, &_read);
-      //   ELOG("read_cb: RBUFFER_UNTIL_EMPTY:\n%s", xmemdup(_ptr, consumed));
-      // }
-
       // termkey_push_bytes can return (size_t)-1, so it is possible that
       // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is
       // called soon, it shouldn't happen

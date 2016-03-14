@@ -17,9 +17,7 @@ describe('tui paste', function()
       '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
 
     -- Pasting can be really slow in the TUI, especially in ASAN.
-    -- TODO
-    -- screen.timeout = 60000
-    screen.timeout = 5000
+    screen.timeout = 60000
 
     screen:expect([[
       {1: }                                                 |
@@ -67,7 +65,7 @@ describe('tui paste', function()
     ]])
   end)
 
-  it('raises PastePre, PastePost', function()
+  it('raises PastePre, PastePost in normal-mode', function()
     setup_harness()
 
     -- Send the "start paste" sequence.
@@ -108,6 +106,63 @@ describe('tui paste', function()
       -- INSERT --                                      |
       -- TERMINAL --                                    |
     ]])
+  end)
+
+  it('raises PastePre, PastePost in command-mode', function()
+    -- The default PastePre/PastePost handlers set the 'paste' option. To test,
+    -- we define a command-mode map, then assert that the mapping was ignored
+    -- during paste.
+    feed_tui(":cnoremap st XXX\n")
+
+    feed_tui(":not pasted")
+
+    -- Paste did not start, so the mapping _should_ apply.
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      :not paXXXed{1: }                                     |
+      -- TERMINAL --                                    |
+    ]])
+
+    feed_tui("\003")      -- CTRL-C
+    feed_tui(":")
+    feed_tui("\027[200~") -- Send the "start paste" sequence.
+    feed_tui("pasted")
+
+    -- Paste started, so the mapping should _not_ apply.
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      :pasted{1: }                                          |
+      -- TERMINAL --                                    |
+    ]])
+
+    feed_tui("\003")      -- CTRL-C
+    feed_tui(":")
+    feed_tui("\027[201~") -- Send the "stop paste" sequence.
+    feed_tui("not pasted")
+
+    -- Paste stopped, so the mapping _should_ apply.
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      :not paXXXed{1: }                                     |
+      -- TERMINAL --                                    |
+    ]])
+
+  end)
+
+  -- TODO
+  it('sets undo-point after consecutive pastes', function()
   end)
 
   -- TODO
