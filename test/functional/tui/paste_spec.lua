@@ -18,7 +18,7 @@ describe('tui paste', function()
       '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
 
     -- Pasting can be really slow in the TUI, especially in ASAN.
-    screen.timeout = 5000
+    screen.timeout = 60000
 
     screen:expect([[
       {1: }                                                 |
@@ -59,9 +59,9 @@ describe('tui paste', function()
       item 2997                                         |
       item 2998                                         |
       item 2999                                         |
-      item 3000{1: }                                        |
-      [No Name] [+]                   3000,10        Bot|
-      -- INSERT --                                      |
+      item 300{1:0}                                         |
+      [No Name] [+]                   3000,9         Bot|
+                                                        |
       -- TERMINAL --                                    |
     ]])
   end)
