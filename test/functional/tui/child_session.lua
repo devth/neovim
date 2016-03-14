@@ -1,3 +1,9 @@
+-- XXX: This is a hack: we spawn a child `nvim` inside :terminal and use
+-- jobsend() to send raw bytes. This allows us to test the tui/input.c module,
+-- which does have a public API. But this means that the test session methods
+-- (eval(), request(), ... from helpers.lua) operate on the _host_ session,
+-- _not_ the embedded session.
+
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
@@ -12,6 +18,7 @@ local function feed_termcode(data)
   -- feed with the job API
   nvim('command', 'call jobsend(b:terminal_job_id, "\\x1b'..data..'")')
 end
+
 -- some helpers for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm

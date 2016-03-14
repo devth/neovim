@@ -1,7 +1,6 @@
 
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
-#include "nvim/log.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
@@ -303,8 +302,8 @@ static bool handle_bracketed_paste(TermInput *input)
 
     if (enable) {
       _waiting = true;
-      ELOG("bracketed paste enable");
-      loop_schedule(&loop, event_create(1, apply_pastepre, 1, input));
+      // DLOG("bracketed paste enable");
+      loop_schedule(&loop, event_create(1, apply_pastepre, 0));
     } else {
       // loop_schedule(&loop, event_create(1, apply_pastepost, 1, input));
       enqueue_input(input, PASTEPOST_KEY, sizeof(PASTEPOST_KEY) - 1);
@@ -318,12 +317,10 @@ static bool handle_bracketed_paste(TermInput *input)
 
 static void apply_pastepre(void **argv)  // MAIN thread
 {
-  ELOG("before apply. paste:%d", p_paste);
-  // TermInput *input = argv[0];
+  // DLOG("before apply_autocmds. paste:%d", p_paste);
   apply_autocmds(EVENT_PASTEPRE, NULL, NULL, false, curbuf);
   _waiting = false;
-  ELOG("after apply. paste:%d", p_paste);
-  // flush_buffers(true);
+  // DLOG("after apply_autocmds. paste:%d", p_paste);
 }
 
 // static void apply_pastepost(void **argv)  // MAIN thread
@@ -392,7 +389,6 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       count = i + 1;
       if (c == '\x1b' && count > 1) {
         count--;
-        ELOG("read_cb: found ESC: %c", *rbuffer_get(input->read_stream.buffer, count + 4));
         break;
       }
     }

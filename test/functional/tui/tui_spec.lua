@@ -1,8 +1,7 @@
--- Some sanity checks for the TUI using the builtin terminal emulator
--- as a simple way to send keys and assert screen state.
+-- TUI tests
 local helpers = require('test.functional.helpers')
-local TUI = require('test.functional.tui.helpers')
-local tui_input = TUI.feed_data
+local child_tui = require('test.functional.tui.child_session')
+local feed_tui = child_tui.feed_data
 local execute = helpers.execute
 local nvim_dir = helpers.nvim_dir
 
@@ -11,7 +10,8 @@ describe('tui', function()
 
   before_each(function()
     helpers.clear()
-    screen = TUI.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    screen = child_tui.screen_setup(0, '["'..helpers.nvim_prog..
+      '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -28,7 +28,7 @@ describe('tui', function()
   end)
 
   it('accepts basic utf-8 input', function()
-    tui_input('iabc\ntest1\ntest2')
+    feed_tui('iabc\ntest1\ntest2')
     screen:expect([[
       abc                                               |
       test1                                             |
@@ -38,7 +38,7 @@ describe('tui', function()
       -- INSERT --                                      |
       -- TERMINAL --                                    |
     ]])
-    tui_input('\027')
+    feed_tui('\027')
     screen:expect([[
       abc                                               |
       test1                                             |
@@ -54,7 +54,7 @@ describe('tui', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
       execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
-      tui_input('\027'..c)
+      feed_tui('\027'..c)
     end
     screen:expect([[
       alt-j                                             |
@@ -65,7 +65,7 @@ describe('tui', function()
                                                         |
       -- TERMINAL --                                    |
     ]])
-    tui_input('gg')
+    feed_tui('gg')
     screen:expect([[
       {1:a}lt-d                                             |
       alt-f                                             |
@@ -84,7 +84,7 @@ describe('tui', function()
     -- Example: for input ALT+j:
     --    * Vim (Nvim prior to #3982) sets high-bit, inserts "ê".
     --    * Nvim (after #3982) inserts "j".
-    tui_input('i\027j')
+    feed_tui('i\027j')
     screen:expect([[
       j{1: }                                                |
       ~                                                 |
@@ -97,10 +97,10 @@ describe('tui', function()
   end)
 
   it('accepts ascii control sequences', function()
-    tui_input('i')
-    tui_input('\022\007') -- ctrl+g
-    tui_input('\022\022') -- ctrl+v
-    tui_input('\022\013') -- ctrl+m
+    feed_tui('i')
+    feed_tui('\022\007') -- ctrl+g
+    feed_tui('\022\022') -- ctrl+v
+    feed_tui('\022\013') -- ctrl+m
     screen:expect([[
     {3:^G^V^M}{1: }                                           |
     ~                                                 |
@@ -110,26 +110,6 @@ describe('tui', function()
     -- INSERT --                                      |
     -- TERMINAL --                                    |
     ]], {[1] = {reverse = true}, [2] = {background = 11}, [3] = {foreground = 4}})
-  end)
-
-  it('can handle arbitrarily long bursts of input', function()
-    execute('set ruler')
-    local t = {}
-    for i = 1, 3000 do
-      t[i] = 'item ' .. tostring(i)
-    end
-    tui_input('i\027[200~')
-    tui_input(table.concat(t, '\n'))
-    tui_input('\027[201~')
-    screen:expect([[
-      item 2997                                         |
-      item 2998                                         |
-      item 2999                                         |
-      item 3000{1: }                                        |
-      [No Name] [+]                   3000,10        Bot|
-      -- INSERT --                                      |
-      -- TERMINAL --                                    |
-    ]])
   end)
 end)
 
@@ -141,10 +121,11 @@ describe('tui with non-tty file descriptors', function()
   end)
 
   it('can handle pipes as stdout and stderr', function()
-    local screen = TUI.screen_setup(0, '"'..helpers.nvim_prog..' -u NONE -i NONE --cmd \'set noswapfile\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
+    local screen = child_tui.screen_setup(0, '"'..helpers.nvim_prog..
+      ' -u NONE -i NONE --cmd \'set noswapfile\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
     screen:set_default_attr_ids({})
     screen:set_default_attr_ignore(true)
-    tui_input(':w testF\n:q\n')
+    feed_tui(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
       :q                                                |
@@ -162,13 +143,14 @@ describe('tui focus event handling', function()
 
   before_each(function()
     helpers.clear()
-    screen = TUI.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    screen = child_tui.screen_setup(0, '["'..helpers.nvim_prog..
+      '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
     execute('autocmd FocusGained * echo "gained"')
     execute('autocmd FocusLost * echo "lost"')
   end)
 
   it('can handle focus events in normal mode', function()
-    tui_input('\027[I')
+    feed_tui('\027[I')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -179,7 +161,7 @@ describe('tui focus event handling', function()
       -- TERMINAL --                                    |
     ]])
 
-    tui_input('\027[O')
+    feed_tui('\027[O')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -193,8 +175,8 @@ describe('tui focus event handling', function()
 
   it('can handle focus events in insert mode', function()
     execute('set noshowmode')
-    tui_input('i')
-    tui_input('\027[I')
+    feed_tui('i')
+    feed_tui('\027[I')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -204,7 +186,7 @@ describe('tui focus event handling', function()
       gained                                            |
       -- TERMINAL --                                    |
     ]])
-    tui_input('\027[O')
+    feed_tui('\027[O')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -217,8 +199,8 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in cmdline mode', function()
-    tui_input(':')
-    tui_input('\027[I')
+    feed_tui(':')
+    feed_tui('\027[I')
     screen:expect([[
                                                         |
       ~                                                 |
@@ -228,7 +210,7 @@ describe('tui focus event handling', function()
       g{1:a}ined                                            |
       -- TERMINAL --                                    |
     ]])
-    tui_input('\027[O')
+    feed_tui('\027[O')
     screen:expect([[
                                                         |
       ~                                                 |
@@ -245,7 +227,7 @@ describe('tui focus event handling', function()
     execute('set laststatus=0')
     execute('set noshowmode')
     execute('terminal')
-    tui_input('\027[I')
+    feed_tui('\027[I')
     screen:expect([[
       ready $                                           |
       [Process exited 0]{1: }                               |
@@ -255,7 +237,7 @@ describe('tui focus event handling', function()
       gained                                            |
       -- TERMINAL --                                    |
     ]])
-   tui_input('\027[O')
+   feed_tui('\027[O')
    screen:expect([[
       ready $                                           |
       [Process exited 0]{1: }                               |
