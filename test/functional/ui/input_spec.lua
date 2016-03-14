@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local clear, execute, nvim = helpers.clear, helpers.execute, helpers.nvim
 local feed, next_message, eq = helpers.feed, helpers.next_message, helpers.eq
-local expect = helpers.expect
+local expect, command = helpers.expect, helpers.command
 local Screen = require('test.functional.ui.screen')
 
 describe('mappings', function()
@@ -49,7 +49,7 @@ describe('mappings', function()
   end)
 end)
 
-describe('feeding large chunks of input with <Paste>', function()
+describe('feeding large chunks of input with PastePre', function()
   local screen
   before_each(function()
     clear()
@@ -63,7 +63,7 @@ describe('feeding large chunks of input with <Paste>', function()
     for i = 1, 20000 do
       t[i] = 'item ' .. tostring(i)
     end
-    feed('i<Paste>')
+    command('doautocmd PastePre')
     screen:expect([[
       ^                                                     |
       ~                                                    |
@@ -97,7 +97,7 @@ describe('feeding large chunks of input with <Paste>', function()
       item 20000^                                           |
       -- INSERT (paste) --                                 |
     ]])
-    feed('<Paste>')
+    command('doautocmd PastePost')
     screen:expect([[
       item 19988                                           |
       item 19989                                           |
@@ -111,8 +111,8 @@ describe('feeding large chunks of input with <Paste>', function()
       item 19997                                           |
       item 19998                                           |
       item 19999                                           |
-      item 20000^                                           |
-      -- INSERT --                       20000,11      Bot |
+      item 2000^0                                           |
+                                         20000,10      Bot |
     ]])
   end)
 end)
