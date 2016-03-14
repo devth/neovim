@@ -231,7 +231,7 @@ static void tk_getkeys(TermInput *input, bool force)
     }
   }
 
-  if (result != TERMKEY_RES_AGAIN /*|| input->paste_started */) {
+  if (result != TERMKEY_RES_AGAIN) {
     return;
   }
   // ...else: Partial keypress event was found in the buffer, but it does not
@@ -382,8 +382,9 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
     }
   } while (rbuffer_size(input->read_stream.buffer));
   flush_input(input, true);
-  // CSI and K_SPECIAL are double-escaped later (input_enqueue).
-  // Make sure they can fit into the ring buffer without wrap around.
+  // Make sure the next input escape sequence fits into the ring buffer without
+  // wrap-around. This is necessary because rbuffer_read_ptr() exposes the
+  // underlying buffer to callers who have no idea about the wrap-around.
   rbuffer_reset(input->read_stream.buffer);
 }
 

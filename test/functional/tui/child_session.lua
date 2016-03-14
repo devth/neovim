@@ -1,8 +1,8 @@
 -- XXX: This is a hack: we spawn a child `nvim` inside :terminal and use
 -- jobsend() to send raw bytes. This allows us to test the tui/input.c module,
--- which does have a public API. But this means that the test session methods
--- (eval(), request(), ... from helpers.lua) operate on the _host_ session,
--- _not_ the embedded session.
+-- which does not have a public API. But this means that the test session
+-- methods (eval(), request(), ... from helpers.lua) operate on the _host_
+-- session, _not_ the embedded session.
 
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
