@@ -326,9 +326,9 @@ int main(int argc, char **argv)
                  "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, '')})");
 #undef PROTO
 
-  do_cmdline_cmd("autocmd PastePre  * set paste|if mode()!~#'c\\|t'"
+  do_cmdline_cmd("autocmd PastePre  * set paste|if mode()!~#'[ct]'"
       "|call feedkeys(\"\\<C-\\>\\<C-n>i\",'n')|endif");
-  do_cmdline_cmd("autocmd PastePost * set nopaste|if mode()!~#'c\\|t'"
+  do_cmdline_cmd("autocmd PastePost * set nopaste|if mode()!~#'[ct]'"
       "|call feedkeys(\"\\<C-\\>\\<C-n>\",'n')|endif");
 
   /* Execute --cmd arguments. */

@@ -2,6 +2,7 @@
 -- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Bracketed-Paste-Mode
 local helpers = require('test.functional.helpers')
 local child_tui = require('test.functional.tui.child_session')
+local Screen = require('test.functional.ui.screen')
 local execute = helpers.execute
 local nvim_dir = helpers.nvim_dir
 local eval = helpers.eval
@@ -17,7 +18,7 @@ describe('tui paste', function()
       '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
 
     -- Pasting can be really slow in the TUI, especially in ASAN.
-    screen.timeout = 60000
+    screen.timeout = 5000
 
     screen:expect([[
       {1: }                                                 |
@@ -85,24 +86,49 @@ describe('tui paste', function()
     ]])
   end)
 
-  it('ignores spurious "start paste" sequence', function()
+  it('forwards spurious "start paste" sequence', function()
     setup_harness()
     -- If multiple "start paste" sequences are sent without a corresponding
-    -- "stop paste" sequence, only the first occurrence should be recognized.
+    -- "stop paste" sequence, only the first occurrence should be consumed.
 
     -- Send the "start paste" sequence.
     feed_tui("\027[200~")
+    feed_tui("\npasted from terminal (1)\n")
+    -- Send spurious "start paste" sequence.
     feed_tui("\027[200~")
-    feed_tui("\npasted from terminal (1)\npasted from terminal (2)\n")
+    feed_tui("\n")
     -- Send the "stop paste" sequence.
     feed_tui("\027[201~")
 
     screen:expect([[
       PastePre mode:n                                   |
       pasted from terminal (1)                          |
-      pasted from terminal (2)                          |
-      PastePost mode:i{1: }                                 |
+      {1:^[}200~                                            |
+      PastePost mode:i{2: }                                 |
       [No Name] [+]                                     |
+      -- INSERT --                                      |
+      -- TERMINAL --                                    |
+    ]], {
+      [1] = {foreground = 4},
+      [2] = {reverse = true},
+    })
+  end)
+
+  it('ignores spurious "stop paste" sequence', function()
+    setup_harness()
+    -- If "stop paste" sequence is received without a preceding "start paste"
+    -- sequence, it should be ignored.
+
+    feed_tui("i")
+    -- Send "stop paste" sequence.
+    feed_tui("\027[201~")
+
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
       -- INSERT --                                      |
       -- TERMINAL --                                    |
     ]])

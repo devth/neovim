@@ -284,17 +284,22 @@ static bool handle_focus_event(TermInput *input)
 static bool handle_bracketed_paste(TermInput *input)
 {
   RBuffer *rbuf = input->read_stream.buffer;
+
   if (rbuffer_size(rbuf) > 5
       && (!rbuffer_cmp(rbuf, "\x1b[200~", 6)
           || !rbuffer_cmp(rbuf, "\x1b[201~", 6))) {
     bool enable = *rbuffer_get(rbuf, 4) == '0';
+    rbuffer_consumed(rbuf, 6);  // Advance past the sequence
 
     if (enable && input->paste_started) {
-      // Received a bogus "paste start" after paste was already started.
-      return false;
+      // Bogus "paste start"; forward it.
+      enqueue_input(input, "<C-v><Esc>200~", sizeof("<C-v><Esc>200~") - 1);
+      return true;
+    } else if (!enable && !input->paste_started) {
+      // Bogus "paste stop"; ignore it.
+      return true;
     }
 
-    rbuffer_consumed(rbuf, 6);  // Advance past the sequence
     input->paste_started = enable;
     if (enable) {
       loop_schedule(&loop, event_create(1, apply_pastepre, 0));
