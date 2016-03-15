@@ -379,7 +379,7 @@ static void process_interrupts(void)
   }
 
   if (got_int && consume_count) {
-    // Remove all unprocessed input (typeahead) before the CTRL-C.
+    // Remove all unprocessed input before the CTRL-C.
     rbuffer_consumed(input_buffer, consume_count);
   }
 }
