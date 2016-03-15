@@ -41,9 +41,9 @@ describe('tui paste', function()
 
     -- Set up test handlers.
     feed_tui(":autocmd PastePre * "..
-      "call feedkeys('iPastePre mode:'.mode(),'n')\n")
+      "call feedkeys('iPastePre mode:'.mode(),'in')\n")
     feed_tui(":autocmd PastePost * "..
-      "call feedkeys('PastePost mode:'.mode(),'n')\n")
+      "call feedkeys('PastePost mode:'.mode(),'in')\n")
   end
 
   it('handles long bursts of input', function()

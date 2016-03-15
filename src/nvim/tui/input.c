@@ -304,7 +304,6 @@ static bool handle_bracketed_paste(TermInput *input)
     if (enable) {
       loop_schedule(&loop, event_create(1, apply_pastepre, 0));
     } else {
-      flush_input(input, true);
       enqueue_input(input, PASTEPOST_KEY, sizeof(PASTEPOST_KEY) - 1);
     }
     return true;
