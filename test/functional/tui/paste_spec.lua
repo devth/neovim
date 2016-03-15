@@ -41,9 +41,9 @@ describe('tui paste', function()
 
     -- Set up test handlers.
     feed_tui(":autocmd PastePre * "..
-      "call feedkeys('iPastePre mode:'.mode(),'in')\n")
+      "call feedkeys('iPastePre mode:'.mode(),'n')\n")
     feed_tui(":autocmd PastePost * "..
-      "call feedkeys('PastePost mode:'.mode(),'in')\n")
+      "call feedkeys('PastePost mode:'.mode(),'n')\n")
   end
 
   it('handles long bursts of input', function()
@@ -52,7 +52,7 @@ describe('tui paste', function()
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
-    feed_tui('i\027[200~')
+    feed_tui('\027[200~')
     feed_tui(table.concat(t, '\n'))
     feed_tui('\027[201~')
     screen:expect([[
