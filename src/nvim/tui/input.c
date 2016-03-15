@@ -281,8 +281,13 @@ static bool handle_focus_event(TermInput *input)
   return false;
 }
 
+static bool _waiting = false;
 static bool handle_bracketed_paste(TermInput *input)
 {
+  if (_waiting) {
+    return true;
+  }
+
   RBuffer *rbuf = input->read_stream.buffer;
 
   if (rbuffer_size(rbuf) > 5
@@ -302,6 +307,7 @@ static bool handle_bracketed_paste(TermInput *input)
 
     input->paste_started = enable;
     if (enable) {
+      _waiting = true;
       loop_schedule(&loop, event_create(1, apply_pastepre, 0));
     } else {
       enqueue_input(input, PASTEPOST_KEY, sizeof(PASTEPOST_KEY) - 1);
@@ -314,6 +320,7 @@ static bool handle_bracketed_paste(TermInput *input)
 static void apply_pastepre(void **argv)  // MAIN thread
 {
   apply_autocmds(EVENT_PASTEPRE, NULL, NULL, false, curbuf);
+  _waiting = false;
 }
 
 static bool handle_forced_escape(TermInput *input)
