@@ -223,6 +223,8 @@ Example: `nvim_list_bufs` operates in a global context (first parameter is
 _not_ a Buffer). The common {action} "list" indicates that it lists all
 bufs (plural) in the global context.
 
+LOGGING							*dev-logging*
+
 
 EXTERNAL UI 						*dev-ui*
 
