@@ -5986,7 +5986,6 @@ static const char *highlight_init_both[] = {
   "Conceal "
       "ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
   "Cursor       guibg=fg guifg=bg",
-  "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
   "ErrorMsg     ctermbg=DarkRed ctermfg=White guibg=Red guifg=White",
   "IncSearch    cterm=reverse gui=reverse",
@@ -6000,6 +5999,7 @@ static const char *highlight_init_both[] = {
   "TermCursor   cterm=reverse gui=reverse",
   "VertSplit    cterm=reverse gui=reverse",
   "WildMenu     ctermbg=Yellow ctermfg=Black guibg=Yellow guifg=Black",
+  "default link lCursor Cursor",
   "default link EndOfBuffer NonText",
   "default link QuickFixLine Search",
   "default link Substitute Search",
@@ -6009,6 +6009,7 @@ static const char *highlight_init_both[] = {
 };
 
 static const char *highlight_init_light[] = {
+  "Cursor       ctermbg=Black ctermfg=White",
   "ColorColumn  ctermbg=LightRed guibg=LightRed",
   "CursorColumn ctermbg=LightGrey guibg=Grey90",
   "CursorLine   cterm=underline guibg=Grey90",
@@ -6037,11 +6038,14 @@ static const char *highlight_init_light[] = {
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
+  // No ctermbg/ctermfg. If we paint the "negative space" the terminal emulator
+  // treats it as whitespace, which is annoying for clipboard copying.
   "Normal       gui=NONE",
   NULL
 };
 
 static const char *highlight_init_dark[] = {
+  "Cursor       ctermbg=White ctermfg=Black",
   "ColorColumn  ctermbg=DarkRed guibg=DarkRed",
   "CursorColumn ctermbg=DarkGrey guibg=Grey40",
   "CursorLine   cterm=underline guibg=Grey40",
@@ -6070,6 +6074,8 @@ static const char *highlight_init_dark[] = {
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
+  // No ctermbg/ctermfg. If we paint the "negative space" the terminal emulator
+  // treats it as whitespace, which is annoying for clipboard copying.
   "Normal       gui=NONE",
   NULL
 };
@@ -6691,17 +6697,13 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             if (cterm_normal_fg_color) {
               color = cterm_normal_fg_color - 1;
             } else {
-              EMSG(_("E419: FG color unknown"));
-              error = true;
-              break;
+              color = (*p_bg == 'l') ? 0 : 15;
             }
           } else if (STRICMP(arg, "bg") == 0)   {
             if (cterm_normal_bg_color > 0)
               color = cterm_normal_bg_color - 1;
             else {
-              EMSG(_("E420: BG color unknown"));
-              error = true;
-              break;
+              color = (*p_bg == 'l') ? 15 : 0;
             }
           } else {
             static const char *color_names[] = {
