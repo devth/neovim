@@ -158,5 +158,12 @@ describe('startup', function()
        funcs.system({nvim_prog, '-i', 'NONE', '-es', '-' },
                     input))
   end)
+
+  it('-es/-Es (silent/batch mode) disables swapfiles, shada, user config (-n -i NONE -u NONE)', function()
+    eq("  swapfile  updatecount=0  shada=!,'100,<50,s10,h\n",
+       funcs.system({nvim_prog, '-es', '+set swapfile? updatecount? shada?', }))
+    eq("  swapfile  updatecount=0  shada=!,'100,<50,s10,h\n",
+       funcs.system({nvim_prog, '-Es', '+set swapfile? updatecount? shada?', }))
+  end)
 end)
 

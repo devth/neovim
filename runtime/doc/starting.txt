@@ -205,7 +205,8 @@ argument.
 		When 'verbose' is set messages are printed to stderr, e.g.: >
 			echo foo | nvim -V1 -es
 <
-		User |init.vim| is skipped (unless given with |-u|).
+		Skips user |init.vim| (unless given with |-u|).
+		Skips |shada-file| and |swap-file|.
 		|$TERM| is not used.
 		Example: >
 			printf "put ='foo'\n%%print\n" | nvim -es

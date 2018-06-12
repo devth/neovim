@@ -125,6 +125,8 @@ Loop main_loop;
 
 static char *argv0 = NULL;
 
+static char *arg_none = "NONE";
+
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
 static const char *err_opt_garbage = N_("Garbage after option argument");
@@ -769,6 +771,10 @@ static void command_line_scan(mparm_T *parmp)
           if (exmode_active) {
             // "nvim -e -" silent mode
             silent_mode = true;
+            parmp->no_swap_file = true;
+            if (used_shada_file == NULL) {
+              used_shada_file = arg_none;
+            }
           } else {
             if (parmp->edit_type != EDIT_NONE
                 && parmp->edit_type != EDIT_FILE
@@ -961,6 +967,10 @@ static void command_line_scan(mparm_T *parmp)
         case 's': {
           if (exmode_active) {    // "-es" silent (batch) Ex-mode
             silent_mode = true;
+            parmp->no_swap_file = true;
+            if (used_shada_file == NULL) {
+              used_shada_file = arg_none;
+            }
           } else {                // "-s {scriptin}" read from script file
             want_argument = true;
           }
