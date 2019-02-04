@@ -955,11 +955,11 @@ void nvim_set_current_win(Window window, Error *err)
   }
 }
 
-/// Create new empty buffer
+/// Creates a new, empty buffer.
 ///
-/// @param listed whether the buffer should be listed
+/// @param listed Sets 'buflisted'
 /// @param[out] err Error details, if any
-/// @return the buffer handle or 0 when error
+/// @return Buffer handle, or 0 on error
 Buffer nvim_create_buf(Boolean listed, Error *err)
   FUNC_API_SINCE(6)
 {
